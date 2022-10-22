@@ -2,6 +2,50 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <cmath>
+#include <algorithm>
+#include "raylib.h"
+
+class PicrossLevel {
+    public:
+        int getNumRows();
+        int getNumCols();
+        std::vector<std::vector<int>> getRowRules();
+        std::vector<std::vector<int>> getColRules();
+        bool isRowSolved(int rowNum);
+        bool isColSolved(int colNum);
+        bool isSolved();
+        bool markCell(int row, int col, char symbol);
+        void reset();
+        PicrossLevel(const std::string &name, const std::vector<std::vector<int>> &rowRules, const std::vector<std::vector<int>> &colRules);
+        PicrossLevel(const std::string &filename);
+    private:
+        std::string name;
+        int numRows;
+        int numCols;
+        std::vector<std::vector<int>> rowRules;
+        std::vector<std::vector<int>> colRules;
+        std::vector<std::vector<char>> board;
+        std::vector<bool> solvedRows;
+        std::vector<bool> solvedCols;
+
+        void initLevel(const std::string &name, const std::vector<std::vector<int>> &rowRules, const std::vector<std::vector<int>> &colRules);
+};
+
+void PicrossLevel::initLevel(const std::string &name, const std::vector<std::vector<int>> &rowRules, const std::vector<std::vector<int>> &colRules) {
+    this->name = name;
+    this->rowRules = rowRules;
+    this->colRules = colRules;
+    numRows = rowRules.size();
+    numCols = colRules.size();
+    board = std::vector<std::vector<char>>(numRows, std::vector<char>(numCols, ' '));
+    solvedRows = std::vector<bool>(numRows, false);
+    solvedCols = std::vector<bool>(numCols, false);
+}
+
+PicrossLevel::PicrossLevel(const std::string &name, const std::vector<std::vector<int>> &rowRules, const std::vector<std::vector<int>> &colRules) {
+    initLevel(name, rowRules, colRules);
+}
 
 /* level file format:
  * first line is 2 numbers, first num is number of rows, second is number of columns
@@ -10,9 +54,9 @@
  * row rules are listed first before column rules
  * row rules are top to bottom, column rules are left to right
  */
-std::vector<std::vector<std::vector<int>>> loadLevel(const std::string &fileName) {
+PicrossLevel::PicrossLevel(const std::string &filename) {
     std::vector<std::vector<std::vector<int>>> rules;
-    std::ifstream levelFile(fileName);
+    std::ifstream levelFile(filename);
     std::string line = "";
 
     int numRows, numCols, spacePos;
@@ -48,7 +92,25 @@ std::vector<std::vector<std::vector<int>>> loadLevel(const std::string &fileName
     }
 
     levelFile.close();
-    return rules;
+
+    name = "";
+    initLevel(name, rules[0], rules[1]);
+}
+
+int PicrossLevel::getNumRows() {
+    return numRows;
+}
+
+int PicrossLevel::getNumCols() {
+    return numCols;
+}
+
+std::vector<std::vector<int>> PicrossLevel::getRowRules() {
+    return rowRules;
+}
+
+std::vector<std::vector<int>> PicrossLevel::getColRules() {
+    return colRules;
 }
 
 bool isValidRow(std::vector<char>& row, std::vector<int>& hints) {
@@ -102,6 +164,26 @@ bool isValidSolution(std::vector<std::vector<char>> board, std::vector<std::vect
     return true;
 }
 
+void drawLevel(PicrossLevel level) {
+    int cellSize = 20;
+    int rows = level.getNumRows();
+    int cols = level.getNumCols();
+    int maxAxis = std::max(rows, cols);
+    int levelSize = maxAxis-1+5-((maxAxis-1)%5); // round up to multiple of 5
+    int leftRuleWidth = std::ceil(cols/2.0) * cellSize;
+    int topRuleHeight = std::ceil(rows/2.0) * cellSize;
+    int levelWidth = levelSize * cellSize + leftRuleWidth;
+    int levelHeight = levelSize * cellSize + topRuleHeight;
+    Vector2 topLeft = {(GetScreenWidth()-levelWidth)/2.0f, (GetScreenHeight()-levelHeight)/2.0f};
+
+    for (int i = leftRuleWidth; i <= levelWidth; i += cellSize) {
+        DrawLine(topLeft.x + i, topLeft.y, topLeft.x + i, topLeft.y + levelHeight, BLACK);
+    }
+    for (int i = topRuleHeight; i <= levelHeight; i += cellSize) {
+        DrawLine(topLeft.x, topLeft.y + i, topLeft.x + levelWidth, topLeft.y + i, BLACK);
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc >= 2) {
         std::vector<int> hint;
@@ -144,13 +226,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    std::vector<std::vector<std::vector<int>>> board;
-
-    board = loadLevel("levels/test.txt");
+    PicrossLevel level("levels/test.txt");
 
     std::cout << "Row rules:" << std::endl;
 
-    for (auto &r : board[0]) {
+    for (auto &r : level.getRowRules()) {
         for (auto &n : r) {
             std::cout << n << ' ';
         }
@@ -159,12 +239,30 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Column rules:" << std::endl;
 
-    for (auto &r : board[1]) {
+    for (auto &r : level.getColRules()) {
         for (auto &n : r) {
             std::cout << n << ' ';
         }
         std::cout << std::endl;
     }
+    
+    const int screenWidth = 800;
+    const int screenHeight = 600;
+
+    InitWindow(screenWidth, screenHeight, "Picross");
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+            drawLevel(level);
+        EndDrawing();
+    }
+
+    CloseWindow();        // Close window and OpenGL context
 
     return 0;
 }
