@@ -168,19 +168,32 @@ void drawLevel(PicrossLevel level) {
     int cellSize = 20;
     int rows = level.getNumRows();
     int cols = level.getNumCols();
-    int maxAxis = std::max(rows, cols);
-    int levelSize = maxAxis-1+5-((maxAxis-1)%5); // round up to multiple of 5
+    
+    // where rule numbers are displayed
     int leftRuleWidth = std::ceil(cols/2.0) * cellSize;
     int topRuleHeight = std::ceil(rows/2.0) * cellSize;
-    int levelWidth = levelSize * cellSize + leftRuleWidth;
-    int levelHeight = levelSize * cellSize + topRuleHeight;
-    Vector2 topLeft = {(GetScreenWidth()-levelWidth)/2.0f, (GetScreenHeight()-levelHeight)/2.0f};
+    // total w/h rules + cells
+    int levelWidth = cols * cellSize + leftRuleWidth;
+    int levelHeight = rows * cellSize + topRuleHeight;
 
-    for (int i = leftRuleWidth; i <= levelWidth; i += cellSize) {
-        DrawLine(topLeft.x + i, topLeft.y, topLeft.x + i, topLeft.y + levelHeight, BLACK);
+    // TODO: use for scaling
+    int maxAxis = std::max(rows, cols);
+    int levelSize = maxAxis-1+5-((maxAxis-1)%5); // round up to multiple of 5
+    int canvasWidth = std::ceil(levelSize * 1.5) * cellSize;
+    int canvasHeight = std::ceil(levelSize * 1.5) * cellSize;
+    Vector2 topLeft = {(GetScreenWidth()-canvasWidth)/2.0f, (GetScreenHeight()-canvasHeight)/2.0f};
+    DrawRectangleLines(topLeft.x, topLeft.y, canvasWidth, canvasHeight, BLACK);
+
+    int posX = (GetScreenWidth()-levelWidth)/2;
+    int posY = (GetScreenHeight()-levelHeight)/2;
+
+    for (int i = 0; i <= cols; i++) {
+        int x = posX + leftRuleWidth + i * cellSize;
+        DrawLine(x, posY, x, posY + levelHeight, BLACK);
     }
-    for (int i = topRuleHeight; i <= levelHeight; i += cellSize) {
-        DrawLine(topLeft.x, topLeft.y + i, topLeft.x + levelWidth, topLeft.y + i, BLACK);
+    for (int i = 0; i <= rows; i++) {
+        int y = posY + topRuleHeight + i * cellSize;
+        DrawLine(posX, y, posX + levelWidth, y, BLACK);
     }
 }
 
