@@ -83,10 +83,24 @@ void drawLevel(PicrossLevel level) {
     for (int i = 0; i <= cols; i++) {
         int x = posX + leftRuleWidth + i * cellSize;
         DrawLine(x, posY, x, posY + levelHeight, BLACK);
+        if (i < cols) {
+            int lenRule = level.getColRules()[i].size();
+            for (int j = 0; j < lenRule; j++) {
+                std::string ruleNumStr = std::to_string(level.getColRules()[i][j]);
+                DrawText(ruleNumStr.c_str(), x+2, posY + j*20, 20, BLACK);
+            }
+        }
     }
     for (int i = 0; i <= rows; i++) {
         int y = posY + topRuleHeight + i * cellSize;
         DrawLine(posX, y, posX + levelWidth, y, BLACK);
+        if (i < rows) {
+            int lenRule = level.getRowRules()[i].size();
+            for (int j = 0; j < lenRule; j++) {
+                std::string ruleNumStr = std::to_string(level.getRowRules()[i][j]);
+                DrawText(ruleNumStr.c_str(), posX + j*20 + 4, y, 20, BLACK);
+            }
+        }
     }
 }
 
