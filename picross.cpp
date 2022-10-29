@@ -51,6 +51,16 @@ void drawLevel(PicrossLevel level) {
                 std::string ruleNumStr = std::to_string(rule[j]);
                 DrawText(ruleNumStr.c_str(), posX + j*20 + 4, y, 20, BLACK);
             }
+            std::vector<char> row = level.getRow(i);
+            for (int k = 0; k < cols; k++) {
+                int cellX = leftRuleWidth + posX + k*20;
+                if (row[k] == 'o') {
+                    DrawRectangle(cellX, y, 20, 20, BLACK);
+                } else if (row[k] == 'x') {
+                    DrawLine(cellX, y, cellX + 20, y + 20, BLACK);
+                    DrawLine(cellX + 20, y, cellX, y + 20, BLACK);
+                }
+            }
         }
     }
 }
@@ -77,6 +87,7 @@ int main(int argc, char *argv[]) {
     }
 
     std::vector<std::pair<int, int>> toFill{ {0,1},{0,2},{0,3},{1,1},{1,3},{2,1},{2,2},{2,3},{3,2},{4,2},{4,3} };
+    std::vector<std::pair<int, int>> xMarks{ {0,0},{0,4},{1,0},{1,2},{1,4},{2,0},{2,4},{3,0},{3,1},{3,3},{3,4},{4,0},{4,1},{4,4} };
 
     for (auto &it : toFill) {
         level.markCell(it.first, it.second, 'o');
@@ -89,11 +100,22 @@ int main(int argc, char *argv[]) {
             std::cout << std::endl;
         }
     }
+    for (auto &it : xMarks) {
+        level.markCell(it.first, it.second, 'x');
+        std::vector<std::vector<char>> board = level.getBoard();
+        for (int row = 0; row < board.size(); row++) {
+            std::vector<int> rule = level.getRowRule(row);
+            for (auto &cell : board[row]) {
+                std::cout << cell;
+            }
+            std::cout << std::endl;
+        }
+    }
 
     std::cout << "level solved: " << level.isSolved() << std::endl;
-    level.reset();
-    std::cout << "level cleared." << std::endl;
-    std::cout << "level solved: " << level.isSolved() << std::endl;
+    //level.reset();
+    //std::cout << "level cleared." << std::endl;
+    //std::cout << "level solved: " << level.isSolved() << std::endl;
 
     const int screenWidth = 800;
     const int screenHeight = 600;
